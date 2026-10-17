@@ -1,0 +1,24 @@
+server:
+  port: 8080
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+spring:
+  application:
+    name: fraudalert
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/fraudalert}
+    username: ${SPRING_DATASOURCE_USERNAME:fraudalert}
+    password: ${SPRING_DATASOURCE_PASSWORD:change-this-local-password}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: 6379
+fraudalert:
+  ml-service-url: ${ML_SERVICE_URL:http://localhost:8001}

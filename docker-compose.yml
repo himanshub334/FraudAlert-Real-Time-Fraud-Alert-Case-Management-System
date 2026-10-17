@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fraudalert}
+      POSTGRES_USER: ${POSTGRES_USER:-fraudalert}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-this-local-password}
+    ports: ["5432:5432"]
+    volumes: [fraudalert-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fraudalert} -d ${POSTGRES_DB:-fraudalert}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+  ml-service:
+    build: ./ml-service
+    ports: ["8001:8001"]
+  backend:
+    build: ./backend
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:postgresql://postgres:5432/fraudalert}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-fraudalert}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-change-this-local-password}
+      SPRING_DATA_REDIS_HOST: redis
+      ML_SERVICE_URL: ${ML_SERVICE_URL:-http://ml-service:8001}
+    ports: ["8080:8080"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_started}
+      ml-service: {condition: service_started}
+  frontend:
+    build: ./frontend
+    ports: ["5173:80"]
+    depends_on: [backend]
+volumes:
+  fraudalert-data:
